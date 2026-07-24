@@ -8,8 +8,6 @@ def health_check(request):
 
 
 urlpatterns = [
-    path("", health_check, name="health-root"),
-    path("health/", health_check, name="health"),
     path("admin/", admin.site.urls),
     path("api/auth/", include("accounts.urls")),
     path("api/tasks/", include("tasks.urls")),

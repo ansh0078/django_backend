@@ -3,6 +3,8 @@ from rest_framework import viewsets, filters, permissions
 from .models import Task
 from .serializers import TaskSerializer
 from .permissions import IsOwner
+from accounts.permissions import IsAdminRole
+from .serializers import AdminTaskSerializer, AdminTaskStatusUpdateSerializer
 
 
 class TaskViewSet(viewsets.ModelViewSet):
@@ -26,3 +28,22 @@ class TaskViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
+
+class AdminTaskViewSet(viewsets.ModelViewSet):
+    """
+    /api/admin/tasks/            GET (view all tasks, ?search=&status=&priority=&owner=)
+    /api/admin/tasks/{id}/       GET, PATCH (update status), DELETE (delete task)
+    """
+    permission_classes = [permissions.IsAuthenticated, IsAdminRole]
+    queryset = Task.objects.select_related("owner").all()
+    http_method_names = ["get", "patch", "delete", "head", "options"]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ["status", "priority", "owner"]
+    search_fields = ["title", "description", "owner__email", "owner__name"]
+    ordering_fields = ["created_at", "due_date", "priority", "status"]
+    ordering = ["-created_at"]
+
+    def get_serializer_class(self):
+        if self.action in ("update", "partial_update"):
+            return AdminTaskStatusUpdateSerializer
+        return AdminTaskSerializer

@@ -27,3 +27,23 @@ class TaskSerializer(serializers.ModelSerializer):
         if value and self.instance is None and value < timezone.now() - timezone.timedelta(days=1):
             raise serializers.ValidationError("Due date cannot be in the past.")
         return value
+
+class AdminTaskSerializer(serializers.ModelSerializer):
+    """Read serializer for admin: View all tasks (with owner info)."""
+    owner_name = serializers.CharField(source="owner.name", read_only=True)
+    owner_email = serializers.EmailField(source="owner.email", read_only=True)
+
+    class Meta:
+        model = Task
+        fields = [
+            "id", "title", "description", "priority", "status",
+            "due_date", "created_at", "updated_at", "owner", "owner_name", "owner_email",
+        ]
+        read_only_fields = fields
+
+
+class AdminTaskStatusUpdateSerializer(serializers.ModelSerializer):
+    """Write serializer for admin: Update task statuses (status field only)."""
+    class Meta:
+        model = Task
+        fields = ["status"]
